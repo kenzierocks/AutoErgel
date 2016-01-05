@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
+import me.kenzierocks.autoergel.osadata.util.Tuple;
 import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
 
 public class CraftingData {
@@ -19,9 +20,9 @@ public class CraftingData {
         return Stream.of(asLayout)
                 .map(z -> z == null ? new ItemStack[len] : z).map(
                         x -> Stream.of(x)
-                                .map(z -> z == null ? Shortcuts
-                                        .singleStackOfItem(ItemTypes.NONE) : z)
-                        .map(ItemStack::copy).toArray(ItemStack[]::new))
+                                .map(z -> z == null ? ItemStack.getNoneStack()
+                                        : z)
+                                .map(ItemStack::copy).toArray(ItemStack[]::new))
                 .toArray(ItemStack[][]::new);
     }
 
@@ -55,7 +56,7 @@ public class CraftingData {
         return this.asList;
     }
 
-    public Pair<List<ItemStack>, CraftingData>
+    public Tuple<List<ItemStack>, CraftingData>
             removeStacks(ItemStack... stacks) {
         ItemStack[][] layout = getAsLayout();
         List<ItemStack> result = ImmutableList.copyOf(Stream.of(stacks)
@@ -63,8 +64,7 @@ public class CraftingData {
                     for (int r = 0; r < layout.length; r++) {
                         for (int c = 0; c < layout[0].length; c++) {
                             ItemStack atPos = layout[r][c];
-                            while (atPos != null && TBMDataManager
-                                    .itemStacksEqualIgnoringSize(atPos, x)
+                            while (atPos != null && atPos.equalIgnoringSize(x)
                                     && x.getQuantity() > 0) {
                                 x.setQuantity(x.getQuantity() - 1);
                                 atPos.setQuantity(atPos.getQuantity() - 1);
@@ -77,7 +77,7 @@ public class CraftingData {
                     }
                     return x.getQuantity() <= 0 ? null : x;
                 }).filter(Objects::nonNull).iterator());
-        return Pair.of(result, this.withLayout(layout));
+        return Tuple.of(result, this.withLayout(layout));
     }
 
     public CraftingData withLayout(ItemStack[][] layout) {

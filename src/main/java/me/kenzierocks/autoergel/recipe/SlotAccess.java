@@ -1,6 +1,6 @@
 package me.kenzierocks.autoergel.recipe;
 
-import me.kenzierocks.autoergel.osadata.item.inventory.ItemStack;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
 
 public interface SlotAccess {
 

@@ -6,10 +6,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.kenzierocks.autoergel.Shortcuts;
-import me.kenzierocks.autoergel.osadata.item.ItemTypes;
-import me.kenzierocks.autoergel.osadata.item.inventory.ItemStack;
-import me.kenzierocks.autoergel.osadata.item.inventory.ItemStackSnapshot;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStackSnapshot;
+
 
 public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
 
@@ -35,7 +34,7 @@ public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
 
         {
             checkLayout();
-            link(' ', Shortcuts.singleStackOfItem(ItemTypes.NONE));
+            link(' ', ItemStack.getNoneStack());
         }
 
         protected abstract ItemStackSnapshot[][] createLayout();

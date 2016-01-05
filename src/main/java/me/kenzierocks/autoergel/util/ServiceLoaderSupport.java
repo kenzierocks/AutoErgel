@@ -2,29 +2,20 @@ package me.kenzierocks.autoergel.util;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import com.google.common.collect.FluentIterable;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 
 public final class ServiceLoaderSupport {
 
-    public static interface ServiceProvider<T>
-            extends Comparable<ServiceProvider<T>> {
-
-        T provide();
-
-        Class<T> getProvidedType();
-
-        @Override
-        int compareTo(ServiceProvider<T> other);
-
-    }
-
-    @SuppressWarnings("unchecked")
     public static <T> Stream<ServiceProvider<T>>
             provideServiceProviders(Class<T> service) {
         checkNotNull(service, "service class cannot be null");
@@ -42,7 +33,32 @@ public final class ServiceLoaderSupport {
     }
 
     public static <T> Optional<T> provideNegotiatedService(Class<T> service) {
-        Streams.fromIterator(provideServiceProviders(service)).
+        List<ServiceProvider<T>> provided =
+                provideServiceProviders(service).collect(Collectors.toList());
+        return provided.stream().sorted(voteSort(provided)).findFirst()
+                .map(ServiceProvider::provide);
+    }
+
+    /**
+     * Vote sort uses a list of {@link ServiceProvider}s to vote on each
+     * instance and then compares them by that.
+     */
+    private static <T> Comparator<? super ServiceProvider<T>>
+            voteSort(List<ServiceProvider<T>> provided) {
+        Multiset<ServiceProvider<T>> votes = HashMultiset.create();
+        Consumer<ServiceProvider<T>> countVotes = (x) -> {
+            if (!votes.contains(x)) {
+                // add 1 extra vote to "mark" that we voted it in
+                votes.add(x, 1
+                        + provided.stream().mapToInt(z -> z.voteFor(x)).sum());
+            }
+        };
+        return (a, b) -> {
+            countVotes.accept(a);
+            countVotes.accept(b);
+            // Compare the opposite way so that biggest vote is first.
+            return -Integer.compare(votes.count(a), votes.count(b));
+        };
     }
 
     private ServiceLoaderSupport() {

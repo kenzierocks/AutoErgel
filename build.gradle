@@ -87,7 +87,7 @@ license {
     ignoreFailures = false
     strictCheck = true
     include '**/*.java'
-    exclude '**/data/**/*.java'
+    exclude '**/osadata/**/*.java'
     mapping {
         java = 'SLASHSTAR_STYLE'
     }

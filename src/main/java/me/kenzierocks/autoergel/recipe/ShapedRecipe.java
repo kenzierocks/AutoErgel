@@ -5,10 +5,9 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.Optional;
 import java.util.function.Function;
 
-import me.kenzierocks.autoergel.TBMDataManager;
-import me.kenzierocks.autoergel.osadata.item.ItemTypes;
-import me.kenzierocks.autoergel.osadata.item.inventory.ItemStack;
-import me.kenzierocks.autoergel.osadata.item.inventory.ItemStackSnapshot;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStackSnapshot;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemType;
 
 public interface ShapedRecipe extends Recipe {
 
@@ -36,10 +35,9 @@ public interface ShapedRecipe extends Recipe {
     default boolean matches(ItemStack stack, int r, int c) {
         if (stack == null) {
             // special case
-            return getStackAt(r, c).getItem().equals(ItemTypes.NONE);
+            return getStackAt(r, c).getItem().equals(ItemType.NONE);
         }
-        return TBMDataManager.itemStacksEqualIgnoringSize(stack,
-                getStackAt(r, c));
+        return getStackAt(r, c).equalIgnoringSize(stack);
     }
 
     @Override
@@ -110,8 +108,7 @@ public interface ShapedRecipe extends Recipe {
                     layoutStack = containerItem.copy();
                     layoutStack.setQuantity(q);
                 }
-                if (!TBMDataManager.itemStacksEqualIgnoringSize(recipeStack,
-                        layoutStack)
+                if (!recipeStack.equalIgnoringSize(layoutStack)
                         || (layoutStack.getQuantity()
                                 - recipeStack.getQuantity()) < 0) {
                     throw new IllegalArgumentException("Cannot apply once");

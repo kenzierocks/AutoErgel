@@ -26,11 +26,11 @@ package me.kenzierocks.autoergel.osadata.data.value.mutable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Function;
 
 import me.kenzierocks.autoergel.osadata.data.DataTransactionResult;
+import me.kenzierocks.autoergel.osadata.data.ValueContainerMidExtend;
 import me.kenzierocks.autoergel.osadata.data.key.Key;
 import me.kenzierocks.autoergel.osadata.data.merge.MergeFunction;
 import me.kenzierocks.autoergel.osadata.data.value.BaseValue;
@@ -48,7 +48,7 @@ import me.kenzierocks.autoergel.osadata.data.value.ValueContainer;
  *            to
  */
 public interface CompositeValueStore<S extends CompositeValueStore<S, H>, H extends ValueContainer<?>>
-        extends ValueContainer<S> {
+        extends ValueContainerMidExtend<S, H> {
 
     /**
      * Gets the desired {@link ValueContainer} of type <code>H</code> if the
@@ -396,15 +396,5 @@ public interface CompositeValueStore<S extends CompositeValueStore<S, H>, H exte
      * @return The transaction result
      */
     DataTransactionResult copyFrom(S that, MergeFunction function);
-
-    /**
-     * Gets an copied collection of all known {@link ValueContainer}s belonging
-     * to this {@link CompositeValueStore}. An individual {@link ValueContainer}
-     * can be used for data processing for various purposes.
-     *
-     * @return A collection of copied {@link ValueContainer}s originating from
-     *         this value store
-     */
-    Collection<H> getContainers();
 
 }

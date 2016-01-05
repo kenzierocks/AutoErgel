@@ -24,10 +24,10 @@
  */
 package me.kenzierocks.autoergel.osadata.data.value.immutable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import me.kenzierocks.autoergel.osadata.data.ValueContainerMidExtend;
 import me.kenzierocks.autoergel.osadata.data.key.Key;
 import me.kenzierocks.autoergel.osadata.data.manipulator.DataManipulator;
 import me.kenzierocks.autoergel.osadata.data.merge.MergeFunction;
@@ -46,7 +46,7 @@ import me.kenzierocks.autoergel.osadata.data.value.ValueContainer;
  *            to
  */
 public interface ImmutableValueStore<I extends ImmutableValueStore<I, H>, H extends ValueContainer<?>>
-        extends ValueContainer<I> {
+        extends ValueContainerMidExtend<I, H> {
 
     /**
      * Gets the desired {@link ValueContainer} of type <code>H</code> if the
@@ -290,15 +290,5 @@ public interface ImmutableValueStore<I extends ImmutableValueStore<I, H>, H exte
      * @return The new immutable value store instance
      */
     I merge(I that, MergeFunction function);
-
-    /**
-     * Gets an copied collection of all known {@link ValueContainer}s belonging
-     * to this {@link ImmutableValueStore}. An individual {@link ValueContainer}
-     * can be used for data processing for various purposes.
-     *
-     * @return A collection of copied {@link ValueContainer}s originating from
-     *         this value store
-     */
-    List<H> getContainers();
 
 }
