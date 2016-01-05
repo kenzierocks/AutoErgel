@@ -1,9 +1,0 @@
-<factorypath>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/auto-common-0.4.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/auto-factory-1.0-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/auto-service-1.0-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/auto-value-1.2-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/guava-18.0.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/javawriter-2.5.1.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AutoErgel/libs/apt/javax.inject-1.jar" enabled="true" runInBatchMode="false"/>
-</factorypath>
