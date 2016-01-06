@@ -34,6 +34,7 @@ import me.kenzierocks.autoergel.osadata.data.ImmutableDataHolder;
 import me.kenzierocks.autoergel.osadata.data.ValueContainerMidExtend;
 import me.kenzierocks.autoergel.osadata.data.manipulator.DataManipulator;
 import me.kenzierocks.autoergel.osadata.data.manipulator.ImmutableDataManipulator;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack.Factory;
 import me.kenzierocks.autoergel.util.ServiceLoaderSupport;
 
 /**
@@ -80,26 +81,31 @@ public abstract class AutoErgel {
      * Required to make a defensive copy of {@link #NONE_STACK}. TODO: Consider
      * implementing immutable stacks at some point.
      */
-    private static final class ItemStackHelper {
+    private static final class ISCommonHelper {
 
         /**
          * This field is not guaranteed to be the only stack of {@code NONE}
          * available, it is meant as a convenience only.
          */
-        private static final ItemStack NONE_STACK =
-                ItemStack.of(ItemType.Provider.INSTANCE.getNoneType(), 0);
+        private static final ItemStackSnapshot NONE_STACK = ItemStackSnapshot
+                .of(ItemType.Provider.INSTANCE.getNoneType(), 0);
 
         private static boolean manipulatorsEqual(ISCommon<?, ?, ?> o1,
                 ISCommon<?, ?, ?> o2) {
             return o1.getContainers().equals(o2.getContainers());
         }
 
+        public static boolean bothHaveCommonParent(ISCommon<?, ?, ?> a,
+                ISCommon<?, ?, ?> b) {
+            Class<?> aC = a.getClass();
+            Class<?> bC = b.getClass();
+            return aC.isAssignableFrom(bC) || bC.isAssignableFrom(aC);
+        }
+
     }
 
     private interface ISCommon<TYPE extends ISCommon<TYPE, VC, DM>, VC extends ValueContainerMidExtend<VC, DM>, DM>
             extends ValueContainerMidExtend<VC, DM> {
-
-        Class<TYPE> $getInterface();
 
         ItemType getItem();
 
@@ -112,10 +118,10 @@ public abstract class AutoErgel {
         int getMaxDamage();
 
         default boolean equalIgnoringSize(ISCommon<?, ?, ?> other) {
-            return other != null && other.$getInterface() == $getInterface()
+            return other != null && ISCommonHelper.bothHaveCommonParent(this, other)
                     && other.getDamage() == getDamage()
                     && other.getItem().equals(getItem())
-                    && ItemStackHelper.manipulatorsEqual(this, other);
+                    && ISCommonHelper.manipulatorsEqual(this, other);
         }
 
     }
@@ -124,14 +130,27 @@ public abstract class AutoErgel {
             ISCommon<ItemStackSnapshot, ItemStackSnapshot, ImmutableDataManipulator<?, ?>>,
             ImmutableDataHolder<ItemStackSnapshot> {
 
+        static ItemStackSnapshot of(ItemType item, int quantity) {
+            return Factory.INSTANCE.createSnapshot(item, quantity);
+        }
+
+        static ItemStackSnapshot getNoneStack() {
+            return ISCommonHelper.NONE_STACK.copy();
+        }
+
+        ItemStackSnapshot withItem(ItemType item);
+
+        ItemStackSnapshot withQuantity(int quantity);
+
+        ItemStackSnapshot withQuantityChange(int amount);
+
+        ItemStackSnapshot withDamage(int damage);
+
+        ItemStackSnapshot withDamageChange(int amount);
+
         default ItemStack createStack() {
             return ItemStack.Factory.INSTANCE.create(getItem(), getQuantity(),
                     getDamage(), toContainer());
-        }
-
-        @Override
-        default Class<ItemStackSnapshot> $getInterface() {
-            return ItemStackSnapshot.class;
         }
 
     }
@@ -170,15 +189,15 @@ public abstract class AutoErgel {
             return Factory.INSTANCE.create(item, quantity);
         }
 
-        static ItemStack getNoneStack() {
-            return ItemStackHelper.NONE_STACK.copy();
-        }
-
         void setItem(ItemType item);
 
         void setQuantity(int quantity);
 
+        void changeQuantity(int amount);
+
         void setDamage(int damage);
+
+        void changeDamage(int amount);
 
         default ItemStackSnapshot createSnapshot() {
             return Factory.INSTANCE.createSnapshot(getItem(), getQuantity(),
@@ -187,11 +206,6 @@ public abstract class AutoErgel {
 
         @Override
         ItemStack copy();
-
-        @Override
-        default Class<ItemStack> $getInterface() {
-            return ItemStack.class;
-        }
 
     }
 

@@ -28,44 +28,48 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
 import me.kenzierocks.autoergel.osadata.util.Tuple;
-import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStackSnapshot;
 
 public class CraftingData {
 
-    private static ItemStack[][] deepCopyGrid(ItemStack[][] asLayout) {
+    private static ItemStackSnapshot[][]
+            deepCopyGrid(ItemStackSnapshot[][] asLayout) {
         int len = Stream.of(asLayout).filter(Objects::nonNull)
                 .mapToInt(x -> x.length).findFirst().orElse(0);
         return Stream.of(asLayout)
-                .map(z -> z == null ? new ItemStack[len] : z).map(
-                        x -> Stream.of(x)
-                                .map(z -> z == null ? ItemStack.getNoneStack()
-                                        : z)
-                                .map(ItemStack::copy).toArray(ItemStack[]::new))
-                .toArray(ItemStack[][]::new);
+                .map(z -> z == null ? new ItemStackSnapshot[len] : z)
+                .map(x -> Stream.of(x)
+                        .map(z -> Optional.ofNullable(z)
+                                .orElseGet(ItemStackSnapshot::getNoneStack))
+                        .map(ItemStackSnapshot::copy)
+                        .toArray(ItemStackSnapshot[]::new))
+                .toArray(ItemStackSnapshot[][]::new);
     }
 
-    private final ItemStack[][] asLayout;
-    private final List<ItemStack> asList;
-    private transient ItemStack[][] cachedCopy;
+    private final ItemStackSnapshot[][] asLayout;
+    private final List<ItemStackSnapshot> asList;
+    private transient ItemStackSnapshot[][] cachedCopy;
 
-    public CraftingData(ItemStack[][] asLayout, List<ItemStack> asList) {
+    public CraftingData(ItemStackSnapshot[][] asLayout,
+            List<ItemStackSnapshot> asList) {
         this.asLayout = deepCopyGrid(asLayout);
-        this.asList = ImmutableList
-                .copyOf(asList.stream().map(ItemStack::copy).iterator());
+        this.asList = ImmutableList.copyOf(
+                asList.stream().map(ItemStackSnapshot::copy).iterator());
     }
 
-    public ItemStack[][] getAsLayout() {
+    public ItemStackSnapshot[][] getAsLayout() {
         // default to caching because it's easy.
         return getAsLayout(true);
     }
 
-    public ItemStack[][] getAsLayout(boolean cachedCopy) {
+    public ItemStackSnapshot[][] getAsLayout(boolean cachedCopy) {
         if (cachedCopy) {
             if (this.cachedCopy == null) {
                 this.cachedCopy = getAsLayout(false);
@@ -76,43 +80,58 @@ public class CraftingData {
         }
     }
 
-    public List<ItemStack> getAsList() {
+    public List<ItemStackSnapshot> getAsList() {
         return this.asList;
     }
 
-    public Tuple<List<ItemStack>, CraftingData>
-            removeStacks(ItemStack... stacks) {
-        ItemStack[][] layout = getAsLayout();
-        List<ItemStack> result = ImmutableList.copyOf(Stream.of(stacks)
-                .filter(Objects::nonNull).map(ItemStack::copy).map(x -> {
-                    for (int r = 0; r < layout.length; r++) {
-                        for (int c = 0; c < layout[0].length; c++) {
-                            ItemStack atPos = layout[r][c];
-                            while (atPos != null && atPos.equalIgnoringSize(x)
-                                    && x.getQuantity() > 0) {
-                                x.setQuantity(x.getQuantity() - 1);
-                                atPos.setQuantity(atPos.getQuantity() - 1);
-                                if (atPos.getQuantity() == 0) {
-                                    atPos = null;
+    public Tuple<List<ItemStackSnapshot>, CraftingData>
+            removeStacks(ItemStackSnapshot... stacks) {
+        ItemStackSnapshot[][] layout = getAsLayout();
+        List<ItemStackSnapshot> result =
+                ImmutableList.copyOf(Stream.of(stacks).filter(Objects::nonNull)
+                        .map(ItemStackSnapshot::copy).map(x -> {
+                            if (x == null || x.getQuantity() <= 0) {
+                                return null;
+                            }
+                            // For every stack2remove (S2R)
+                            everything: for (int r =
+                                    0; r < layout.length; r++) {
+                                for (int c = 0; c < layout[0].length; c++) {
+                                    ItemStackSnapshot atPos = layout[r][c];
+                                    // Get the stack in inventory (SII)
+                                    if (atPos != null
+                                            && atPos.equalIgnoringSize(x)) {
+                                        while (atPos != null) {
+                                            // Reduce the quantity, slowly
+                                            x = x.withQuantityChange(-1);
+                                            atPos = atPos
+                                                    .withQuantityChange(-1);
+                                            if (atPos.getQuantity() == 0) {
+                                                atPos = null;
+                                            }
+                                            if (x.getQuantity() == 0) {
+                                                break everything;
+                                            }
+                                        }
+                                    }
+                                    // Set back stack
+                                    layout[r][c] = atPos;
                                 }
                             }
-                            layout[r][c] = atPos;
-                        }
-                    }
-                    return x.getQuantity() <= 0 ? null : x;
-                }).filter(Objects::nonNull).iterator());
+                            return x.getQuantity() <= 0 ? null : x;
+                        }).filter(Objects::nonNull).iterator());
         return Tuple.of(result, this.withLayout(layout));
     }
 
-    public CraftingData withLayout(ItemStack[][] layout) {
-        List<ItemStack> list = Stream.of(layout).flatMap(Stream::of)
+    public CraftingData withLayout(ItemStackSnapshot[][] layout) {
+        List<ItemStackSnapshot> list = Stream.of(layout).flatMap(Stream::of)
                 .filter(Objects::nonNull).collect(Collectors.toList());
         return new CraftingData(layout, list);
     }
 
-    public CraftingData withList(List<ItemStack> list) {
-        ItemStack[][] layout = getAsLayout();
-        Iterator<ItemStack> iter = list.iterator();
+    public CraftingData withList(List<ItemStackSnapshot> list) {
+        ItemStackSnapshot[][] layout = getAsLayout();
+        Iterator<ItemStackSnapshot> iter = list.iterator();
         for (int r = 0; r < layout.length && iter.hasNext(); r++) {
             for (int c = 0; c < layout[0].length && iter.hasNext(); c++) {
                 layout[r][c] = iter.next();

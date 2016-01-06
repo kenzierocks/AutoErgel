@@ -29,7 +29,6 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.Optional;
 import java.util.function.Function;
 
-import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
 import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStackSnapshot;
 import me.kenzierocks.autoergel.recipe.AutoErgel.ItemType;
 
@@ -39,9 +38,9 @@ public interface ShapedRecipe extends Recipe {
 
     int getCols();
 
-    ItemStack getStackAt(int r, int c);
+    ItemStackSnapshot getStackAt(int r, int c);
 
-    ItemStack translateLayoutToOutput(ItemStack[][] asLayout);
+    ItemStackSnapshot translateLayoutToOutput(ItemStackSnapshot[][] asLayout);
 
     /**
      * Check if the given ItemStack matches at the given row and column. Any
@@ -56,7 +55,7 @@ public interface ShapedRecipe extends Recipe {
      *            - column
      * @return {@code true} if it matches, otherwise {@code false}
      */
-    default boolean matches(ItemStack stack, int r, int c) {
+    default boolean matches(ItemStackSnapshot stack, int r, int c) {
         if (stack == null) {
             // special case
             return getStackAt(r, c).getItem().equals(ItemType.NONE);
@@ -65,7 +64,7 @@ public interface ShapedRecipe extends Recipe {
     }
 
     @Override
-    default Optional<ItemStack> tryToApplyRecipe(CraftingData data) {
+    default Optional<ItemStackSnapshot> tryToApplyRecipe(CraftingData data) {
         checkState(getRows() > 0, "cannot have 0 rows");
         checkState(getCols() > 0, "cannot have 0 columns");
         if (data.getAsLayout().length < getRows()
@@ -77,7 +76,7 @@ public interface ShapedRecipe extends Recipe {
         }
         for (int r = 0; r < getRows(); r++) {
             for (int c = 0; c < getCols(); c++) {
-                ItemStack user = data.getAsLayout()[r][c];
+                ItemStackSnapshot user = data.getAsLayout()[r][c];
                 if (!matches(user, r, c)) {
                     return Optional.empty();
                 }
@@ -88,8 +87,8 @@ public interface ShapedRecipe extends Recipe {
 
     @Override
     default Optional<CraftingData> onResultTaken(CraftingData data,
-            ItemStack takenResult,
-            Function<ItemStack, ItemStack> getContainerItem) {
+            ItemStackSnapshot takenResult,
+            Function<ItemStackSnapshot, ItemStackSnapshot> getContainerItem) {
         // First, double check that the recipe matches
         return tryToApplyRecipe(data).map(res -> {
             // Next, double check the amounts
@@ -120,17 +119,16 @@ public interface ShapedRecipe extends Recipe {
 
     @Override
     default CraftingData removeItemsForOneApply(CraftingData data,
-            Function<ItemStack, ItemStack> getContainerItem) {
-        ItemStack[][] layout = data.getAsLayout();
+            Function<ItemStackSnapshot, ItemStackSnapshot> getContainerItem) {
+        ItemStackSnapshot[][] layout = data.getAsLayout();
         for (int r = 0; r < getRows(); r++) {
             for (int c = 0; c < getCols(); c++) {
-                ItemStack recipeStack = getStackAt(r, c).copy();
-                ItemStack layoutStack = layout[r][c];
-                ItemStack containerItem = getContainerItem.apply(layoutStack);
+                ItemStackSnapshot recipeStack = getStackAt(r, c).copy();
+                ItemStackSnapshot layoutStack = layout[r][c];
+                ItemStackSnapshot containerItem = getContainerItem.apply(layoutStack);
                 if (containerItem != null) {
                     int q = layoutStack.getQuantity();
-                    layoutStack = containerItem.copy();
-                    layoutStack.setQuantity(q);
+                    layoutStack = containerItem.copy().withQuantity(q);
                 }
                 if (!recipeStack.equalIgnoringSize(layoutStack)
                         || (layoutStack.getQuantity()
@@ -139,8 +137,8 @@ public interface ShapedRecipe extends Recipe {
                 }
                 while (recipeStack.getQuantity() > 0
                         && layoutStack.getQuantity() > 0) {
-                    layoutStack.setQuantity(layoutStack.getQuantity() - 1);
-                    recipeStack.setQuantity(recipeStack.getQuantity() - 1);
+                    layoutStack = layoutStack.withQuantityChange(-1);
+                    recipeStack = recipeStack.withQuantityChange(-1);
                 }
             }
         }
@@ -152,8 +150,8 @@ public interface ShapedRecipe extends Recipe {
         ItemStackSnapshot getOutput();
 
         @Override
-        default ItemStack translateLayoutToOutput(ItemStack[][] asLayout) {
-            return getOutput().createStack();
+        default ItemStackSnapshot translateLayoutToOutput(ItemStackSnapshot[][] asLayout) {
+            return getOutput();
         }
 
     }

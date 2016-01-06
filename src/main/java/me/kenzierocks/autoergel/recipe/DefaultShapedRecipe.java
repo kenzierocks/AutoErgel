@@ -29,10 +29,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
 import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStackSnapshot;
-
 
 public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
 
@@ -40,7 +40,11 @@ public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
 
         SUBTYPE link(char character, ItemStack stack);
 
+        SUBTYPE link(char character, ItemStackSnapshot stack);
+
         SUBTYPE result(ItemStack stack);
+
+        SUBTYPE result(ItemStackSnapshot stack);
 
         SUBTYPE duplicate();
 
@@ -58,7 +62,7 @@ public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
 
         {
             checkLayout();
-            link(' ', ItemStack.getNoneStack());
+            link(' ', ItemStackSnapshot.getNoneStack());
         }
 
         protected abstract ItemStackSnapshot[][] createLayout();
@@ -79,15 +83,27 @@ public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
 
         @Override
         public SUBTYPE link(char character, ItemStack stack) {
+            return link(character, Optional.ofNullable(stack)
+                    .map(ItemStack::createSnapshot).orElse(null));
+        }
+
+        @Override
+        public SUBTYPE link(char character, ItemStackSnapshot stack) {
             checkNotNull(stack, "linked stack cannot be null");
-            this.links.put(character, stack.createSnapshot());
+            this.links.put(character, stack);
             return $this();
         }
 
         @Override
         public SUBTYPE result(ItemStack result) {
+            return result(Optional.ofNullable(result)
+                    .map(ItemStack::createSnapshot).orElse(null));
+        }
+
+        @Override
+        public SUBTYPE result(ItemStackSnapshot result) {
             checkNotNull(result, "result cannot be null");
-            this.result = result.createSnapshot();
+            this.result = result;
             return $this();
         }
 
@@ -228,8 +244,8 @@ public final class DefaultShapedRecipe implements ShapedRecipe.SingleOutput {
     }
 
     @Override
-    public ItemStack getStackAt(int r, int c) {
-        return this.layout[r][c].createStack();
+    public ItemStackSnapshot getStackAt(int r, int c) {
+        return this.layout[r][c];
     }
 
     @Override

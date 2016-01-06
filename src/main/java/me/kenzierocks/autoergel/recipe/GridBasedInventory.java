@@ -24,14 +24,54 @@
  */
 package me.kenzierocks.autoergel.recipe;
 
+import java.util.function.Function;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
 
-public interface SlotAccess {
+public interface GridBasedInventory {
+
+    int getWidth();
+
+    int getHeight();
+
+    /**
+     * Returns the contents of this inventory, in no particular order.
+     */
+    default Stream<ItemStack> getContentsAsStream() {
+        return IntStream.range(0, getWidth())
+                .mapToObj(w -> IntStream.range(0, getHeight())
+                        .mapToObj(h -> getSlot(w, h)))
+                .flatMap(Function.identity());
+    }
+
+    default ItemStack[][] getContentsAsGrid() {
+        ItemStack[][] grid = new ItemStack[getWidth()][getHeight()];
+        for (int i = 0; i < grid.length; i++) {
+            ItemStack[] row = grid[i];
+            for (int j = 0; j < row.length; j++) {
+                row[j] = getSlot(i, j);
+            }
+        }
+        return grid;
+    }
 
     ItemStack getSlot(int x, int y);
 
+    /**
+     * N.B. implementations should make defensive copy of {@code item}
+     */
     void setSlot(int x, int y, ItemStack item);
 
-    void removeStack(ItemStack stack);
+    /**
+     * Remove {@code {@link ItemStack#getQuantity() stack.getQuantity()} amount
+     * of {@code {@link ItemStack#getItem() stack.getItem()} from this
+     * inventory. The quantity may be removed across multiple individual stacks.
+     * 
+     * @return The leftovers of {@code stack} that were not removed. If the
+     *         quantity is 0, then all items were removed.
+     */
+    ItemStack removeStack(ItemStack stack);
 
 }

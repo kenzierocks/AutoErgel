@@ -27,7 +27,7 @@ package me.kenzierocks.autoergel.recipe;
 import java.util.Optional;
 import java.util.function.Function;
 
-import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStack;
+import me.kenzierocks.autoergel.recipe.AutoErgel.ItemStackSnapshot;
 
 
 public interface Recipe {
@@ -37,7 +37,7 @@ public interface Recipe {
      * 
      * @return The result item, if present.
      */
-    Optional<ItemStack> tryToApplyRecipe(CraftingData data);
+    Optional<ItemStackSnapshot> tryToApplyRecipe(CraftingData data);
 
     /**
      * Attempts to apply this recipe to the given items + layout.
@@ -45,10 +45,10 @@ public interface Recipe {
      * @return The result item, if present.
      */
     Optional<CraftingData> onResultTaken(CraftingData data,
-            ItemStack takenResult,
-            Function<ItemStack, ItemStack> getContainerItem);
+            ItemStackSnapshot takenResult,
+            Function<ItemStackSnapshot, ItemStackSnapshot> getContainerItem);
 
     CraftingData removeItemsForOneApply(CraftingData data,
-            Function<ItemStack, ItemStack> getContainerItem);
+            Function<ItemStackSnapshot, ItemStackSnapshot> getContainerItem);
 
 }
